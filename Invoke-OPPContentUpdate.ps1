@@ -4,7 +4,7 @@
 
 .DESCRIPTION
     This script will ensure that the latest content version is updated when this script is either manually triggered or scheduled to run by doing the following:
-    - Download the latest Office Deployment Tool executable and replace existing setup.exe in application content source path
+    - Download the latest Office Deployment Tool executable and replace existing setupodt.exe in application content source path
     - Update the Office 365 ProPlus application content to the latest version
     - Update the detection method of the application in ConfigMgr with the latest versioning details
 
@@ -68,6 +68,8 @@ param(
     [bool]$SkipDetectionMethodUpdate = $true
 )
 Begin {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    
     # Determine SiteCode from WMI
     try {
         Write-Verbose -Message "Determining Site Code for Site server: '$($SiteServer)'"
@@ -152,21 +154,21 @@ Process {
             $ODTExtractionArguments = "/quiet /extract:$($ODTExtractionPath)"
 
             # Extract ODT files
-            Write-Verbose -Message "Attempting to extract the setup.exe executable from Office Deployment Toolkit"
+            Write-Verbose -Message "Attempting to extract the setupodt.exe executable from Office Deployment Toolkit"
             Start-Process -FilePath $ODTExecutable -ArgumentList $ODTExtractionArguments -Wait -ErrorAction Stop
 
             try {
                 # Determine if ODT needs to be updated in Office package folder
-                $ODTCurrentVersion = (Get-ChildItem -Path (Join-Path -Path $OfficePackagePath -ChildPath "setup.exe") -ErrorAction Stop).VersionInfo.ProductVersion
+                $ODTCurrentVersion = (Get-ChildItem -Path (Join-Path -Path $OfficePackagePath -ChildPath "setupodt.exe") -ErrorAction Stop).VersionInfo.ProductVersion
                 Write-Verbose -Message "Determined current Office Deployment Toolkit version as: $($ODTCurrentVersion)"
-                $ODTLatestVersion = (Get-ChildItem -Path (Join-Path -Path $ODTExtractionPath -ChildPath "setup.exe") -ErrorAction Stop).VersionInfo.ProductVersion
+                $ODTLatestVersion = (Get-ChildItem -Path (Join-Path -Path $ODTExtractionPath -ChildPath "setupodt.exe") -ErrorAction Stop).VersionInfo.ProductVersion
                 Write-Verbose -Message "Determined latest Office Deployment Toolkit version as: $($ODTLatestVersion)"
 
                 try {
                     if ([System.Version]$ODTLatestVersion -gt [System.Version]$ODTCurrentVersion) {
-                        # Replace existing setup.exe in Office package path with extracted
-                        Write-Verbose -Message "Current Office Deployment Toolkit version needs to be updated to latest version, attempting to copy latest setup.exe"
-                        Copy-Item -Path (Join-Path -Path $ODTExtractionPath -ChildPath "setup.exe") -Destination (Join-Path -Path $OfficePackagePath -ChildPath "setup.exe") -Force -ErrorAction Stop
+                        # Replace existing setupodt.exe in Office package path with extracted
+                        Write-Verbose -Message "Current Office Deployment Toolkit version needs to be updated to latest version, attempting to copy latest setupodt.exe"
+                        Copy-Item -Path (Join-Path -Path $ODTExtractionPath -ChildPath "setupodt.exe") -Destination (Join-Path -Path $OfficePackagePath -ChildPath "setupodt.exe") -Force -ErrorAction Stop
                     }
 
                     try {
@@ -183,10 +185,10 @@ Process {
                             $OfficeDataFileCurrent = Get-ChildItem -Path $OfficeDataFolderRoot -Filter "v*_*.cab" -ErrorAction Stop
 
                             try {
-                                # Construct arguments for setup.exe and call the executable and let it complete before we continue
+                                # Construct arguments for setupodt.exe and call the executable and let it complete before we continue
                                 $OfficeArguments = "/download $($OfficeConfigurationFile)"
                                 Write-Verbose -Message "Attempting to update the Office 365 ProPlus application content based on configuration file"
-                                Start-Process -FilePath "setup.exe" -ArgumentList $OfficeArguments -WorkingDirectory $OfficePackagePath -Wait -ErrorAction Stop
+                                Start-Process -FilePath "setupodt.exe" -ArgumentList $OfficeArguments -WorkingDirectory $OfficePackagePath -Wait -ErrorAction Stop
 
                                 # Cleanup older Office data folder versions
                                 Write-Verbose -Message "Checking to see if previous Office 365 ProPlus application content version should be removed"
@@ -288,7 +290,7 @@ Process {
                     }
                 }
                 catch [System.Exception] {
-                    Write-Warning -Message "Failed to copy new setup.exe to Office application content source. Error message: $($_.Exception.Message)"
+                    Write-Warning -Message "Failed to copy new setupodt.exe to Office application content source. Error message: $($_.Exception.Message)"
                 }
             }
             catch [System.Exception] {
