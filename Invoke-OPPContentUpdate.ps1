@@ -159,16 +159,16 @@ Process {
 
             try {
                 # Determine if ODT needs to be updated in Office package folder
-                $ODTCurrentVersion = (Get-ChildItem -Path (Join-Path -Path $OfficePackagePath -ChildPath "setupodt.exe") -ErrorAction Stop).VersionInfo.ProductVersion
+                $ODTCurrentVersion = (Get-ChildItem -Path (Join-Path -Path $OfficePackagePath -ChildPath "setup*.exe") -ErrorAction Stop).VersionInfo.ProductVersion
                 Write-Verbose -Message "Determined current Office Deployment Toolkit version as: $($ODTCurrentVersion)"
-                $ODTLatestVersion = (Get-ChildItem -Path (Join-Path -Path $ODTExtractionPath -ChildPath "setupodt.exe") -ErrorAction Stop).VersionInfo.ProductVersion
+                $ODTLatestVersion = (Get-ChildItem -Path (Join-Path -Path $ODTExtractionPath -ChildPath "setup*.exe") -ErrorAction Stop).VersionInfo.ProductVersion
                 Write-Verbose -Message "Determined latest Office Deployment Toolkit version as: $($ODTLatestVersion)"
 
                 try {
                     if ([System.Version]$ODTLatestVersion -gt [System.Version]$ODTCurrentVersion) {
                         # Replace existing setupodt.exe in Office package path with extracted
                         Write-Verbose -Message "Current Office Deployment Toolkit version needs to be updated to latest version, attempting to copy latest setupodt.exe"
-                        Copy-Item -Path (Join-Path -Path $ODTExtractionPath -ChildPath "setupodt.exe") -Destination (Join-Path -Path $OfficePackagePath -ChildPath "setupodt.exe") -Force -ErrorAction Stop
+                        Copy-Item -Path (Join-Path -Path $ODTExtractionPath -ChildPath "setup*.exe") -Destination (Join-Path -Path $OfficePackagePath -ChildPath "setup.exe") -Force -ErrorAction Stop
                     }
 
                     try {
@@ -188,7 +188,7 @@ Process {
                                 # Construct arguments for setupodt.exe and call the executable and let it complete before we continue
                                 $OfficeArguments = "/download $($OfficeConfigurationFile)"
                                 Write-Verbose -Message "Attempting to update the Office 365 ProPlus application content based on configuration file"
-                                Start-Process -FilePath "setupodt.exe" -ArgumentList $OfficeArguments -WorkingDirectory $OfficePackagePath -Wait -ErrorAction Stop
+                                Start-Process -FilePath "setup.exe" -ArgumentList $OfficeArguments -WorkingDirectory $OfficePackagePath -Wait -ErrorAction Stop
 
                                 # Cleanup older Office data folder versions
                                 Write-Verbose -Message "Checking to see if previous Office 365 ProPlus application content version should be removed"
